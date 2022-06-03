@@ -25,7 +25,7 @@ organelle : $(objects) hw_interfaces/SerialMCU.o
 
 organelle_m : CXXFLAGS += -DCM3GPIO_HW -DMICSEL_SWITCH -DPWR_SWITCH -DOLED_30FPS -DBATTERY_METER -DFIX_ABL_LINK
 organelle_m : $(objects) hw_interfaces/CM3GPIO.o
-	$(CXX) -l wiringPi -o fw_dir/mother $(objects) hw_interfaces/CM3GPIO.o
+	$(CXX) -lpigpio -o fw_dir/mother $(objects) hw_interfaces/CM3GPIO.o -lpigpio
 
 .PHONY : clean
 

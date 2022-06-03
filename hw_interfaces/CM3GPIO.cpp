@@ -42,6 +42,8 @@
 #define AMP_ENABLE 17         
 #define PWR_STATUS 16           // battery or power adapter 
 
+#define HIGH 1
+#define LOW 0
 
 //#define AUX_LED_RED_OFF digitalWrite(LEDR,HIGH);
 //#define AUX_LED_RED_ON digitalWrite(LEDR,LOW);
@@ -49,12 +51,12 @@
 //#define AUX_LED_GREEN_ON digitalWrite(LEDG,LOW);
 //#define AUX_LED_BLUE_OFF digitalWrite(LEDB,HIGH);
 //#define AUX_LED_BLUE_ON digitalWrite(LEDB,LOW);
-#define AUX_LED_RED_OFF gpioWrite(LEDR,HIGH);
-#define AUX_LED_RED_ON gpioWrite(LEDR,LOW);
-#define AUX_LED_GREEN_OFF gpioWrite(LEDG,HIGH);
-#define AUX_LED_GREEN_ON gpioWrite(LEDG,LOW);
-#define AUX_LED_BLUE_OFF gpioWrite(LEDB,HIGH);
-#define AUX_LED_BLUE_ON gpioWrite(LEDB,LOW);
+#define AUX_LED_RED_OFF gpioWrite(LEDR, 1);
+#define AUX_LED_RED_ON gpioWrite(LEDR, 0);
+#define AUX_LED_GREEN_OFF gpioWrite(LEDG, 1);
+#define AUX_LED_GREEN_ON gpioWrite(LEDG, 0);
+#define AUX_LED_BLUE_OFF gpioWrite(LEDB, 1);
+#define AUX_LED_BLUE_ON gpioWrite(LEDB, 0);
 
 #define BATTERY_BAR_5 4.8
 #define BATTERY_BAR_4 4.7
@@ -65,7 +67,7 @@
 #define LOW_BATTERY_SHUTDOWN_THRESHOLD 4.0
 
 // OLED init bytes
-static unsigned char oled_initcode[] = {
+static char oled_initcode[] = {
 	// Initialisation sequence
 	SSD1306_DISPLAYOFF,                     // 0xAE
 	SSD1306_SETLOWCOLUMN,                   // low col = 0
@@ -98,19 +100,25 @@ static unsigned char oled_initcode[] = {
 	SSD1306_DISPLAYON
 };
 
-static unsigned char oled_poscode[] = {
+static char oled_poscode[] = {
    	SSD1306_SETLOWCOLUMN,                   // low col = 0
 	SSD1306_SETHIGHCOLUMN,                  // hi col = 0
 	SSD1306_SETSTARTLINE                    // line #0
 };
 
 CM3GPIO::CM3GPIO() {
+    gpioInitialise();
 }
 
 void CM3GPIO::init(){
     // setup GPIO, this uses actual BCM pin numbers 
     //wiringPiSetupGpio();
-    gpioInitialise();
+    if(gpioInitialise() < 0) {
+	printf("BUG"); 
+	exit(1);
+    } else {
+	printf("GPIO OK!");
+    }
 
     // GPIO for shift registers
 //    pinMode(SR_PLOAD, OUTPUT);
@@ -142,22 +150,22 @@ void CM3GPIO::init(){
 //    wiringPiSPISetup(1, 4*1000*1000);  // for adc
     gpioSetMode(OLED_DC, PI_OUTPUT);
     gpioSetMode(OLED_RST, PI_OUTPUT);
-    spiOpen(0, 4*1000*1000);
-    spiOpen(1, 4*1000*1000);
+    spiOpen(0, 4*1000*1000, 0);
+    spiOpen(1, 4*1000*1000, 0);
 
     // reset OLED
 //    digitalWrite(OLED_RST,  LOW) ;
 //    delay(50);
 //    digitalWrite(OLED_RST,  HIGH) ;
     gpioWrite(OLED_RST, 0);
-    delay(50);
+    gpioDelay(50);
     gpioWrite(OLED_RST, 1);
 
     // initialize OLED
 //    digitalWrite(OLED_DC, LOW);
 //    wiringPiSPIDataRW(0, oled_initcode, 28);
     gpioWrite(OLED_DC, 0);
-    spiXfer(0, oled_initcode, 28);
+    spiWrite(0, oled_initcode, 28);
 
     // GPIO for LEDs
 //    pinMode(LEDR, OUTPUT);
@@ -177,7 +185,7 @@ void CM3GPIO::init(){
     gpioWrite(LEDR, 0);
     gpioWrite(LEDG, 0);
     gpioWrite(LEDB, 0);
-    delay(10);
+    gpioDelay(10);
     gpioWrite(LEDR, 1);
     gpioWrite(LEDG, 1);
     gpioWrite(LEDB, 1);
@@ -287,7 +295,7 @@ void CM3GPIO::pollKnobs(){
 
 void CM3GPIO::updateOLED(OledScreen &s){
     // spi will overwrite the buffer with input, so we need a tmp
-    uint8_t tmp[1024];
+    char tmp[1024];
     memcpy(tmp, s.pix_buf, 1024);
     
 //    digitalWrite(OLED_DC, LOW);
@@ -296,9 +304,9 @@ void CM3GPIO::updateOLED(OledScreen &s){
 //    wiringPiSPIDataRW(0, tmp, 1024);
 
     gpioWrite(OLED_DC, 0);
-    spiXfer(0, oled_poscode, 3);
+    spiWrite(0, oled_poscode, 3);
     gpioWrite(OLED_DC, 1);
-    spiXfer(0, tmp, 1024);
+    spiWrite(0, tmp, 1024);
 }
 
 void CM3GPIO::ping(){
@@ -565,14 +573,14 @@ uint32_t CM3GPIO::adcRead(uint8_t adcnum)
     commandout = adcnum & 0x7;  // only 0-7
     commandout |= 0x18;     // start bit + single-ended bit
 
-    uint8_t spibuf[3];
+    char spibuf[3];
 
     spibuf[0] = commandout;
     spibuf[1] = 0;
     spibuf[2] = 0;
 
 //    wiringPiSPIDataRW(1, spibuf, 3);    
-    spiXfer(1, spibuf, 3);
+    spiRead(1, spibuf, 3);
 
     return ((spibuf[1] << 8) | (spibuf[2])) >> 4;
     

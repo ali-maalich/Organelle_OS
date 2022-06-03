@@ -4,7 +4,7 @@
 //#include <wiringPi.h>
 //#include <wiringPiSPI.h>
 //#include <wiringShift.h>
-#include <pigpiod.h>
+#include <pigpio.h>
 #include <stdio.h>  
 #include <stdlib.h>  
 #include <stdint.h>
