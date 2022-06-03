@@ -1,9 +1,10 @@
 #ifndef CM3GPIO_H
 #define CM3GPIO_H
 
-#include <wiringPi.h>
-#include <wiringPiSPI.h>
-#include <wiringShift.h>
+//#include <wiringPi.h>
+//#include <wiringPiSPI.h>
+//#include <wiringShift.h>
+#include <pigpiod.h>
 #include <stdio.h>  
 #include <stdlib.h>  
 #include <stdint.h>

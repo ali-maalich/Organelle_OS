@@ -42,12 +42,19 @@
 #define AMP_ENABLE 17         
 #define PWR_STATUS 16           // battery or power adapter 
 
-#define AUX_LED_RED_OFF digitalWrite(LEDR,HIGH);
-#define AUX_LED_RED_ON digitalWrite(LEDR,LOW);
-#define AUX_LED_GREEN_OFF digitalWrite(LEDG,HIGH);
-#define AUX_LED_GREEN_ON digitalWrite(LEDG,LOW);
-#define AUX_LED_BLUE_OFF digitalWrite(LEDB,HIGH);
-#define AUX_LED_BLUE_ON digitalWrite(LEDB,LOW);
+
+//#define AUX_LED_RED_OFF digitalWrite(LEDR,HIGH);
+//#define AUX_LED_RED_ON digitalWrite(LEDR,LOW);
+//#define AUX_LED_GREEN_OFF digitalWrite(LEDG,HIGH);
+//#define AUX_LED_GREEN_ON digitalWrite(LEDG,LOW);
+//#define AUX_LED_BLUE_OFF digitalWrite(LEDB,HIGH);
+//#define AUX_LED_BLUE_ON digitalWrite(LEDB,LOW);
+#define AUX_LED_RED_OFF gpioWrite(LEDR,HIGH);
+#define AUX_LED_RED_ON gpioWrite(LEDR,LOW);
+#define AUX_LED_GREEN_OFF gpioWrite(LEDG,HIGH);
+#define AUX_LED_GREEN_ON gpioWrite(LEDG,LOW);
+#define AUX_LED_BLUE_OFF gpioWrite(LEDB,HIGH);
+#define AUX_LED_BLUE_ON gpioWrite(LEDB,LOW);
 
 #define BATTERY_BAR_5 4.8
 #define BATTERY_BAR_4 4.7
@@ -102,52 +109,87 @@ CM3GPIO::CM3GPIO() {
 
 void CM3GPIO::init(){
     // setup GPIO, this uses actual BCM pin numbers 
-    wiringPiSetupGpio();
+    //wiringPiSetupGpio();
+    gpioInitialise();
 
     // GPIO for shift registers
-    pinMode(SR_PLOAD, OUTPUT);
-    pinMode(SR_CLOCK_ENABLE, OUTPUT);
-    pinMode(SR_CLOCK, OUTPUT);
-    pinMode(SR_DATA, INPUT);
-    digitalWrite(SR_CLOCK, LOW);
-    digitalWrite(SR_PLOAD, HIGH);
-    digitalWrite(SR_CLOCK_ENABLE, LOW);
+//    pinMode(SR_PLOAD, OUTPUT);
+//    pinMode(SR_CLOCK_ENABLE, OUTPUT);
+//    pinMode(SR_CLOCK, OUTPUT);
+//    pinMode(SR_DATA, INPUT);
+//    digitalWrite(SR_CLOCK, LOW);
+//    digitalWrite(SR_PLOAD, HIGH);
+//    digitalWrite(SR_CLOCK_ENABLE, LOW);
+    gpioSetMode(SR_PLOAD, PI_OUTPUT);
+    gpioSetMode(SR_PLOAD, PI_OUTPUT);
+    gpioSetMode(SR_CLOCK_ENABLE, PI_OUTPUT);
+    gpioSetMode(SR_CLOCK, PI_OUTPUT);
+    gpioSetMode(SR_DATA, PI_INPUT);
+    gpioWrite(SR_CLOCK, 0);
+    gpioWrite(SR_PLOAD, 1);
+    gpioWrite(SR_CLOCK_ENABLE, 0);
 
     // enable amplifier
-    pinMode(AMP_ENABLE, OUTPUT);
-    digitalWrite(AMP_ENABLE, HIGH);
+//    pinMode(AMP_ENABLE, OUTPUT);
+//    digitalWrite(AMP_ENABLE, HIGH);
+//    gpioSetMode(AMP_ENABLE, PI_OUTPUT);
+    gpioWrite(AMP_ENABLE, 1);
 
     // OLED pins
-    pinMode (OLED_DC, OUTPUT) ;
-    pinMode (OLED_RST, OUTPUT) ;
-    wiringPiSPISetup(0, 4*1000*1000);
-    wiringPiSPISetup(1, 4*1000*1000);  // for adc
-    
+//    pinMode (OLED_DC, OUTPUT) ;
+//    pinMode (OLED_RST, OUTPUT) ;
+//    wiringPiSPISetup(0, 4*1000*1000);
+//    wiringPiSPISetup(1, 4*1000*1000);  // for adc
+    gpioSetMode(OLED_DC, PI_OUTPUT);
+    gpioSetMode(OLED_RST, PI_OUTPUT);
+    spiOpen(0, 4*1000*1000);
+    spiOpen(1, 4*1000*1000);
+
     // reset OLED
-    digitalWrite(OLED_RST,  LOW) ;
+//    digitalWrite(OLED_RST,  LOW) ;
+//    delay(50);
+//    digitalWrite(OLED_RST,  HIGH) ;
+    gpioWrite(OLED_RST, 0);
     delay(50);
-    digitalWrite(OLED_RST,  HIGH) ;
-    
+    gpioWrite(OLED_RST, 1);
+
     // initialize OLED
-    digitalWrite(OLED_DC, LOW);
-    wiringPiSPIDataRW(0, oled_initcode, 28);
+//    digitalWrite(OLED_DC, LOW);
+//    wiringPiSPIDataRW(0, oled_initcode, 28);
+    gpioWrite(OLED_DC, 0);
+    spiXfer(0, oled_initcode, 28);
 
     // GPIO for LEDs
-    pinMode(LEDR, OUTPUT);
-    pinMode(LEDG, OUTPUT);
-    pinMode(LEDB, OUTPUT);
-    digitalWrite(LEDR, LOW);
-    digitalWrite(LEDG, LOW);
-    digitalWrite(LEDB, LOW);
-    delay(10); // flash em
-    digitalWrite(LEDR, HIGH);
-    digitalWrite(LEDG, HIGH);
-    digitalWrite(LEDB, HIGH);
+//    pinMode(LEDR, OUTPUT);
+//    pinMode(LEDG, OUTPUT);
+//    pinMode(LEDB, OUTPUT);
+//    digitalWrite(LEDR, LOW);
+//    digitalWrite(LEDG, LOW);
+//    digitalWrite(LEDB, LOW);
+//    delay(10); // flash em
+//    digitalWrite(LEDR, HIGH);
+//    digitalWrite(LEDG, HIGH);
+//    digitalWrite(LEDB, HIGH);
+
+    gpioSetMode(LEDR, PI_OUTPUT);
+    gpioSetMode(LEDG, PI_OUTPUT);
+    gpioSetMode(LEDB, PI_OUTPUT);
+    gpioWrite(LEDR, 0);
+    gpioWrite(LEDG, 0);
+    gpioWrite(LEDB, 0);
+    delay(10);
+    gpioWrite(LEDR, 1);
+    gpioWrite(LEDG, 1);
+    gpioWrite(LEDB, 1);
 
     // GPIO for power status 
-    pinMode(PWR_STATUS, INPUT);
-    pullUpDnControl(PWR_STATUS, PUD_OFF);
-    pwrStatus = digitalRead(PWR_STATUS);
+//    pinMode(PWR_STATUS, INPUT);
+//    pullUpDnControl(PWR_STATUS, PUD_OFF);
+//    pwrStatus = digitalRead(PWR_STATUS);
+
+    gpioSetMode(PWR_STATUS, PI_INPUT);
+    gpioSetPullUpDown(PWR_STATUS, PI_PUD_OFF);
+    pwrStatus = gpioRead(PWR_STATUS);
 
     // keys
     keyStatesLast = 0;
@@ -212,8 +254,9 @@ void CM3GPIO::pollKnobs(){
     adcs[6] = adcRead(7);
 
     // also check the pwr status pin
-    pwrStatus = digitalRead(PWR_STATUS);
-    
+//    pwrStatus = digitalRead(PWR_STATUS);
+    pwrStatus = gpioRead(PWR_STATUS);
+
     checkFootSwitch();
     
     // average 16 battery readings
@@ -247,12 +290,16 @@ void CM3GPIO::updateOLED(OledScreen &s){
     uint8_t tmp[1024];
     memcpy(tmp, s.pix_buf, 1024);
     
-    digitalWrite(OLED_DC, LOW);
-    wiringPiSPIDataRW(0, oled_poscode, 3);
-    digitalWrite(OLED_DC, HIGH);
-    wiringPiSPIDataRW(0, tmp, 1024);
-}
+//    digitalWrite(OLED_DC, LOW);
+//    wiringPiSPIDataRW(0, oled_poscode, 3);
+//    digitalWrite(OLED_DC, HIGH);
+//    wiringPiSPIDataRW(0, tmp, 1024);
 
+    gpioWrite(OLED_DC, 0);
+    spiXfer(0, oled_poscode, 3);
+    gpioWrite(OLED_DC, 1);
+    spiXfer(0, tmp, 1024);
+}
 
 void CM3GPIO::ping(){
 
@@ -319,7 +366,7 @@ uint32_t CM3GPIO::shiftRegRead(void)
     // delay functions no good for such small times
 
     // load
-    digitalWrite(SR_PLOAD, LOW);
+/*    digitalWrite(SR_PLOAD, LOW);
     digitalWrite(SR_PLOAD, LOW);
     digitalWrite(SR_PLOAD, LOW);
     digitalWrite(SR_PLOAD, LOW);
@@ -336,15 +383,34 @@ uint32_t CM3GPIO::shiftRegRead(void)
     digitalWrite(SR_PLOAD, HIGH);
     digitalWrite(SR_PLOAD, HIGH);
     digitalWrite(SR_PLOAD, HIGH);
-    
+*/    
+    gpioWrite(SR_PLOAD, 0);
+    gpioWrite(SR_PLOAD, 0);
+    gpioWrite(SR_PLOAD, 0);
+    gpioWrite(SR_PLOAD, 0);
+    gpioWrite(SR_PLOAD, 0);
+    gpioWrite(SR_PLOAD, 0);
+    gpioWrite(SR_PLOAD, 0);
+    gpioWrite(SR_PLOAD, 0);
+
+    gpioWrite(SR_PLOAD, 1);
+    gpioWrite(SR_PLOAD, 1);
+    gpioWrite(SR_PLOAD, 1);
+    gpioWrite(SR_PLOAD, 1);
+    gpioWrite(SR_PLOAD, 1);
+    gpioWrite(SR_PLOAD, 1);
+    gpioWrite(SR_PLOAD, 1);
+    gpioWrite(SR_PLOAD, 1);
+
     // shiftin
    for(int i = 0; i < SR_DATA_WIDTH; i++)
     {
-        bitVal = digitalRead(SR_DATA);
+//        bitVal = digitalRead(SR_DATA);
+        bitVal = gpioRead(SR_DATA);
 
         bytesVal |= (bitVal << ((SR_DATA_WIDTH-1) - i));
 
-        digitalWrite(SR_CLOCK, HIGH);
+/*        digitalWrite(SR_CLOCK, HIGH);
         digitalWrite(SR_CLOCK, HIGH);
         digitalWrite(SR_CLOCK, HIGH);
         digitalWrite(SR_CLOCK, HIGH);
@@ -361,6 +427,25 @@ uint32_t CM3GPIO::shiftRegRead(void)
         digitalWrite(SR_CLOCK, LOW);
         digitalWrite(SR_CLOCK, LOW);
         digitalWrite(SR_CLOCK, LOW);
+*/    
+        gpioWrite(SR_CLOCK, 1);
+        gpioWrite(SR_CLOCK, 1);
+        gpioWrite(SR_CLOCK, 1);
+        gpioWrite(SR_CLOCK, 1);
+        gpioWrite(SR_CLOCK, 1);
+        gpioWrite(SR_CLOCK, 1);
+        gpioWrite(SR_CLOCK, 1);
+        gpioWrite(SR_CLOCK, 1);
+
+        gpioWrite(SR_CLOCK, 0);
+        gpioWrite(SR_CLOCK, 0);
+        gpioWrite(SR_CLOCK, 0);
+        gpioWrite(SR_CLOCK, 0);
+        gpioWrite(SR_CLOCK, 0);
+        gpioWrite(SR_CLOCK, 0);
+        gpioWrite(SR_CLOCK, 0);
+        gpioWrite(SR_CLOCK, 0);
+
     }
     
     pinValues = bytesVal;
@@ -486,7 +571,8 @@ uint32_t CM3GPIO::adcRead(uint8_t adcnum)
     spibuf[1] = 0;
     spibuf[2] = 0;
 
-    wiringPiSPIDataRW(1, spibuf, 3);    
+//    wiringPiSPIDataRW(1, spibuf, 3);    
+    spiXfer(1, spibuf, 3);
 
     return ((spibuf[1] << 8) | (spibuf[2])) >> 4;
     
