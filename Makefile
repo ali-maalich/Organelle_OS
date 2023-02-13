@@ -36,13 +36,13 @@ organelle_m : $(objects) hw_interfaces/CM3GPIO.o
 	$(CXX) -lpigpio -o fw_dir/mother $(objects) hw_interfaces/CM3GPIO.o
 
 piganelle : CXXFLAGS += -DRPI4GPIO_HW -DOLED_30FPS -DFIX_ABL_LINK
-piganelle : $(objects) hw_interfaces/RPI4GPIO.o
-	$(CXX) -lpigpio -o fw_dir/mother $(objects) hw_interfaces/RPI4GPIO.o
+piganelle : $(objects) hw_interfaces/RPI4GPIO.o -lwiringPi
+	$(CXX) -lpigpio -o fw_dir/mother $(objects) hw_interfaces/RPI4GPIO.o -lwiringPi
 
 .PHONY : clean
 
 clean :
-	rm -f main $(objects) fw_dir/mother hw_interfaces/SDLPi.o hw_interfaces/SerialMCU.o hw_interfaces/CM3GPIO.o
+	rm -f main $(objects) fw_dir/mother hw_interfaces/SDLPi.o hw_interfaces/SerialMCU.o hw_interfaces/CM3GPIO.o hw_interfaces/RPI4GPIO.o
 
 IMAGE_BUILD_VERSION = $(shell cat fw_dir/version)
 IMAGE_BUILD_TAG = $(shell cat fw_dir/buildtag)
