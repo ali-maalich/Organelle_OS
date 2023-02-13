@@ -15,10 +15,10 @@
 #include "../SLIPEncodedSerial.h"
 #include "../Serial.h"
 
-class CM3GPIO
+class RPI4GPIO
 {
     public:
-        CM3GPIO();
+        RPI4GPIO();
         void init();
         void poll();
         void pollKnobs();

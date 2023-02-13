@@ -1,4 +1,4 @@
-#include "CM3GPIO.h"
+#include "RPI4GPIO.h"
 
 // for the OLED
 #define SSD1306_LCDHEIGHT                 64
@@ -30,17 +30,15 @@
 
 // GPIO pin defs
 #define SR_DATA_WIDTH 32        // number of bits to shift in on the 74HC165s
-#define SR_PLOAD 34             // parallel load pin 
-#define SR_CLOCK_ENABLE 35      // CE pin 
-#define SR_DATA 33              // Q7 pin 
-#define SR_CLOCK 32             // CLK pin 
-#define OLED_DC 5               // DC pin of OLED
-#define OLED_RST 6              // RST pin of OLED
-#define LEDG 22          
-#define LEDR 23       
-#define LEDB 24         
-#define AMP_ENABLE 17         
-#define PWR_STATUS 16           // battery or power adapter 
+#define SR_PLOAD 0             // parallel load pin 
+#define SR_CLOCK_ENABLE 5      // CE pin 
+#define SR_DATA 6              // Q7 pin 
+#define SR_CLOCK 13             // CLK pin 
+#define OLED_DC 22               // DC pin of OLED
+#define OLED_RST 27              // RST pin of OLED
+#define LEDG 23          
+#define LEDR 24       
+#define LEDB 25         
 
 #define AUX_LED_RED_OFF digitalWrite(LEDR,HIGH);
 #define AUX_LED_RED_ON digitalWrite(LEDR,LOW);
@@ -48,14 +46,6 @@
 #define AUX_LED_GREEN_ON digitalWrite(LEDG,LOW);
 #define AUX_LED_BLUE_OFF digitalWrite(LEDB,HIGH);
 #define AUX_LED_BLUE_ON digitalWrite(LEDB,LOW);
-
-#define BATTERY_BAR_5 4.8
-#define BATTERY_BAR_4 4.7
-#define BATTERY_BAR_3 4.66
-#define BATTERY_BAR_2 4.43
-#define BATTERY_BAR_1 4.29
-#define BATTERY_BAR_0 4.15
-#define LOW_BATTERY_SHUTDOWN_THRESHOLD 4.0
 
 // OLED init bytes
 static unsigned char oled_initcode[] = {
@@ -97,10 +87,10 @@ static unsigned char oled_poscode[] = {
 	SSD1306_SETSTARTLINE                    // line #0
 };
 
-CM3GPIO::CM3GPIO() {
+RPI4GPIO::RPI4GPIO() {
 }
 
-void CM3GPIO::init(){
+void RPI4GPIO::init(){
     // setup GPIO, this uses actual BCM pin numbers 
     wiringPiSetupGpio();
 
@@ -112,10 +102,6 @@ void CM3GPIO::init(){
     digitalWrite(SR_CLOCK, LOW);
     digitalWrite(SR_PLOAD, HIGH);
     digitalWrite(SR_CLOCK_ENABLE, LOW);
-
-    // enable amplifier
-    pinMode(AMP_ENABLE, OUTPUT);
-    digitalWrite(AMP_ENABLE, HIGH);
 
     // OLED pins
     pinMode (OLED_DC, OUTPUT) ;
@@ -144,11 +130,6 @@ void CM3GPIO::init(){
     digitalWrite(LEDG, HIGH);
     digitalWrite(LEDB, HIGH);
 
-    // GPIO for power status 
-    pinMode(PWR_STATUS, INPUT);
-    pullUpDnControl(PWR_STATUS, PUD_OFF);
-    pwrStatus = digitalRead(PWR_STATUS);
-
     // keys
     keyStatesLast = 0;
     clearFlags();
@@ -170,7 +151,7 @@ void CM3GPIO::init(){
 
 }
 
-void CM3GPIO::clearFlags() {
+void RPI4GPIO::clearFlags() {
     encButFlag = 0;
     encTurnFlag = 0;
     knobFlag = 0;
@@ -178,7 +159,7 @@ void CM3GPIO::clearFlags() {
     footswitchFlag = 0;
 }
 
-void CM3GPIO::poll(){
+void RPI4GPIO::poll(){
 
     // read keys (updates pinValues)
     shiftRegRead();
@@ -198,7 +179,7 @@ void CM3GPIO::poll(){
     
 }
 
-void CM3GPIO::pollKnobs(){    
+void RPI4GPIO::pollKnobs(){    
 
     static uint32_t battAvg = 0;
     static uint8_t num = 0;
@@ -210,39 +191,13 @@ void CM3GPIO::pollKnobs(){
     adcs[4] = adcRead(4);
     adcs[5] = adcRead(5);
     adcs[6] = adcRead(7);
-
-    // also check the pwr status pin
-    pwrStatus = digitalRead(PWR_STATUS);
     
     checkFootSwitch();
     
-    // average 16 battery readings
-    battAvg += adcs[6];
-    num++;
-    num &= 0xf;
-    if (!num) {
-        battAvg >>= 4;
-	    // calculate voltage, the 10.3125 is from the voltage divider
-    	batteryVoltage = ((float)battAvg / 1024) * 10.3125;
-	    battAvg = 0;
-
-        // get bars 
-        if      (batteryVoltage > BATTERY_BAR_5) batteryBars = 5;
-        else if (batteryVoltage > BATTERY_BAR_4) batteryBars = 4;
-        else if (batteryVoltage > BATTERY_BAR_3) batteryBars = 3;
-        else if (batteryVoltage > BATTERY_BAR_2) batteryBars = 2;
-        else if (batteryVoltage > BATTERY_BAR_1) batteryBars = 1;
-        else if (batteryVoltage > BATTERY_BAR_0) batteryBars = 0;
-        // check for low batt shutdown, but only when running on batteries (pwrStatus = 1)
-        if (pwrStatus){
-            if (batteryVoltage < LOW_BATTERY_SHUTDOWN_THRESHOLD) lowBatteryShutdown = true;
-        }
-    }
-
     knobFlag = 1;
 }
 
-void CM3GPIO::updateOLED(OledScreen &s){
+void RPI4GPIO::updateOLED(OledScreen &s){
     // spi will overwrite the buffer with input, so we need a tmp
     uint8_t tmp[1024];
     memcpy(tmp, s.pix_buf, 1024);
@@ -254,15 +209,15 @@ void CM3GPIO::updateOLED(OledScreen &s){
 }
 
 
-void CM3GPIO::ping(){
+void RPI4GPIO::ping(){
 
 }
 
-void CM3GPIO::shutdown() {
+void RPI4GPIO::shutdown() {
 
 }
 
-void CM3GPIO::setLED(unsigned stat) {
+void RPI4GPIO::setLED(unsigned stat) {
 
     stat %= 8;
 
@@ -309,7 +264,7 @@ void CM3GPIO::setLED(unsigned stat) {
 }
 
 
-uint32_t CM3GPIO::shiftRegRead(void)
+uint32_t RPI4GPIO::shiftRegRead(void)
 {
     uint32_t bitVal;
     uint32_t bytesVal = 0;
@@ -367,7 +322,7 @@ uint32_t CM3GPIO::shiftRegRead(void)
     return(bytesVal);
 }
 
-void CM3GPIO::getKeys(void){
+void RPI4GPIO::getKeys(void){
     keyStates = 0;
     
     keyStates |= (pinValues >> (0 + 7) & 1) << 24;
@@ -403,7 +358,7 @@ void CM3GPIO::getKeys(void){
     keyStates = ~keyStates;
 }
 
-int CM3GPIO::getEncoder(void){
+int RPI4GPIO::getEncoder(void){
 
 	static uint8_t encoder_last = 0;
 	uint8_t encoder = 0;
@@ -472,7 +427,7 @@ int CM3GPIO::getEncoder(void){
 
 }
 
-uint32_t CM3GPIO::adcRead(uint8_t adcnum)
+uint32_t RPI4GPIO::adcRead(uint8_t adcnum)
 { 
     unsigned int commandout = 0;
 
@@ -492,7 +447,7 @@ uint32_t CM3GPIO::adcRead(uint8_t adcnum)
     
 }
 
-void CM3GPIO::displayPinValues(void)
+void RPI4GPIO::displayPinValues(void)
 {
     for(int i = 0; i < SR_DATA_WIDTH; i++)
     {
@@ -507,7 +462,7 @@ void CM3GPIO::displayPinValues(void)
     printf("\n");
 }
 
-void CM3GPIO::checkFootSwitch (void) {
+void RPI4GPIO::checkFootSwitch (void) {
     static uint8_t foot_last = 0;
     uint8_t tmp;
 

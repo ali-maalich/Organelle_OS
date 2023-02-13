@@ -20,6 +20,10 @@
     #include "hw_interfaces/CM3GPIO.h"
 #endif
 
+#ifdef RPI4GPIO
+    #include "hw_interfaces/RPI4GPIO.h"
+#endif
+
 #ifdef SDLPI_HW
     #include "hw_interfaces/SDLPi.h"
 #endif
@@ -52,6 +56,10 @@ SimpleWriter oscBuf;
 // default to organelle original
 #ifdef CM3GPIO_HW
     CM3GPIO controls;
+#endif
+
+#ifdef RPI4GPIO
+    RPI4GPIO controls
 #endif
 
 #ifdef SDLPI_HW
