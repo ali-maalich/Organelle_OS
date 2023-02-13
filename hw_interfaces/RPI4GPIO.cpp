@@ -16,6 +16,7 @@
 #define SSD1306_SETDISPLAYCLOCKDIV        0xD5
 #define SSD1306_SETPRECHARGE              0xD9
 #define SSD1306_SETMULTIPLEX              0xA8
+#define SSD1306_DEACTIVATESCROLL          0x02
 #define SSD1306_SETLOWCOLUMN              0x00
 #define SSD1306_SETHIGHCOLUMN             0x10
 #define SSD1306_SETSTARTLINE              0x40
@@ -81,6 +82,25 @@ static unsigned char oled_initcode[] = {
 	SSD1306_DISPLAYON
 };
 
+// OLED init bytes
+static unsigned char oled1309_initcode[] = {
+	// Initialisation sequence
+	SSD1306_DISPLAYOFF,                     // 0xAE
+	SSD1306_SETDISPLAYCLOCKDIV, 0xA0,       // 0xD5                                  
+    SSD1306_SETSTARTLINE,                   // line #0
+    SSD1306_MEMORYMODE, 0x02,               // 0x20
+	SSD1306_SEGREMAP | 0x1,                 // setment remap 95 to 0 (?)
+	SSD1306_COMSCANDEC,
+	SSD1306_SETCOMPINS, 0x12,               // 0xDA, disable COM left/right remap                                   
+	SSD1306_SETCONTRAST, 0x6F,              // 0x81
+	SSD1306_SETPRECHARGE, 0xF1,             // 0xd9
+	SSD1306_SETVCOMDETECT, 0x20,            // 0xDB
+    SSD1306_DEACTIVATESCROLL,
+	SSD1306_DISPLAYALLON_RESUME,            // 0xA4
+	SSD1306_NORMALDISPLAY,                  // 0xA6
+	SSD1306_DISPLAYON
+};
+
 static unsigned char oled_poscode[] = {
    	SSD1306_SETLOWCOLUMN,                   // low col = 0
 	SSD1306_SETHIGHCOLUMN,                  // hi col = 0
@@ -116,7 +136,8 @@ void RPI4GPIO::init(){
     
     // initialize OLED
     digitalWrite(OLED_DC, LOW);
-    wiringPiSPIDataRW(0, oled_initcode, 28);
+//    wiringPiSPIDataRW(0, oled_initcode, 28);
+    wiringPiSPIDataRW(0, oled1309_initcode, 20);
 
     // GPIO for LEDs
     pinMode(LEDR, OUTPUT);
