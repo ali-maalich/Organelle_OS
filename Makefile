@@ -33,11 +33,11 @@ organelle : $(objects) hw_interfaces/SerialMCU.o
 
 organelle_m : CXXFLAGS += -DCM3GPIO_HW -DMICSEL_SWITCH -DPWR_SWITCH -DOLED_30FPS -DBATTERY_METER -DFIX_ABL_LINK
 organelle_m : $(objects) hw_interfaces/CM3GPIO.o
-	$(CXX) -lpigpio -o fw_dir/mother $(objects) hw_interfaces/CM3GPIO.o
+	$(CXX) -lWiringPi -o fw_dir/mother $(objects) hw_interfaces/CM3GPIO.o
 
 piganelle : CXXFLAGS += -DRPI4GPIO_HW -DOLED_30FPS -DFIX_ABL_LINK
 piganelle : $(objects) hw_interfaces/RPI4GPIO.o -lwiringPi
-	$(CXX) -lpigpio -o fw_dir/mother $(objects) hw_interfaces/RPI4GPIO.o -lwiringPi
+	$(CXX) -lwiringPi -o fw_dir/mother $(objects) hw_interfaces/RPI4GPIO.o -lwiringPi
 
 .PHONY : clean
 
