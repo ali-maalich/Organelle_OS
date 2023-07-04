@@ -1,20 +1,12 @@
 #!/bin/bash
 
 clear
-sudo chown music:music /sdcard
 sudo apt-get update
 sudo apt-get upgrade -y
-sudo apt-get install -y zip jwm xinit x11-utils x11-xserver-utils lxterminal pcmanfm adwaita-icon-theme gnome-themes-standard gtk-theme-switch conky libasound2-dev liblo-dev liblo-tools mpg123 dnsmasq hostapd
-sudo apt-get install -y python3-pip git iptables dhcpcd5
-sudo apt-get install -y puredata-core luarocks csound supercollider
+sudo apt-get install -y iptables dhcpcd5 adwaita-icon-theme conky csound cython3 dnsmasq git gnome-themes-standard gtk-theme-switch hostapd jwm libasound2-dev liblo-dev liblo-tools luarocks lxterminal mpg123 nodejs pcmanfm puredata pyliblo-utils python3-cherrypy3 python3-liblo python3-rpi.gpio realvnc-vnc-server supercollider x11-utils x11-xserver-utils xinit zip
 
-python3 -m pip install Cython
-python3 -m pip install cherrypy
-python3 -m pip install pyliblo
-
-sudo raspi-config nonint do_boot_behaviour B2
+#sudo raspi-config nonint do_boot_behaviour B2
 
 echo "#3 concluso"
 echo "premere un tasto per riavviare"
-read
 reboot
